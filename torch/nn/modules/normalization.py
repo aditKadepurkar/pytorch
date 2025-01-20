@@ -225,6 +225,29 @@ class LayerNorm(Module):
         )
 
 class LayerNorm2d(Module):
+    r"""
+    Applies Layer Normalization over a 4D input (BCHW format) where normalization is applied
+    across the channel dimension for each spatial location (H, W).
+
+    Args:
+        num_channels (int): Number of channels in the input tensor.
+        eps (float, optional): A small value added to the denominator for numerical stability. Default: 1e-5.
+        elementwise_affine (bool, optional): If True, this module has learnable per-channel affine parameters.
+            Default: True.
+        device (optional): The desired device of the parameters. Default: None.
+        dtype (optional): The desired data type of the parameters. Default: None.
+
+    Shape:
+        - Input: (N, C, H, W) where N is the batch size, C is the number of channels, and H, W are the height and width.
+        - Output: (N, C, H, W) (same shape as input)
+
+    Examples::
+
+        >>> layer_norm = LayerNorm2d(num_channels=3)
+        >>> input_tensor = torch.randn(4, 3, 8, 8)
+        >>> output_tensor = layer_norm(input_tensor)
+
+    """
     def __init__(self, num_channels: int, eps: float = 1e-5, elementwise_affine: bool = True, device=None, dtype=None) -> None:
         super().__init__()
         self.num_channels = num_channels
