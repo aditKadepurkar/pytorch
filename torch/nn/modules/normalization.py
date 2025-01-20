@@ -224,6 +224,34 @@ class LayerNorm(Module):
             "elementwise_affine={elementwise_affine}".format(**self.__dict__)
         )
 
+class LayerNorm2d(Module):
+    def __init__(self, num_channels: int, eps: float = 1e-5, elementwise_affine: bool = True, device=None, dtype=None) -> None:
+        super().__init__()
+        self.num_channels = num_channels
+        self.eps = eps
+        self.elementwise_affine = elementwise_affine
+        factory_kwargs = {"device": device, "dtype": dtype}
+        
+        if self.elementwise_affine:
+            self.weight = Parameter(torch.ones(num_channels, **factory_kwargs))
+            self.bias = Parameter(torch.zeros(num_channels, **factory_kwargs))
+        else:
+            self.register_parameter("weight", None)
+            self.register_parameter("bias", None)
+
+    def forward(self, input: torch.Tensor) -> torch.Tensor:
+        # Normalize over the channel dimension for each spatial location
+        mean = input.mean(dim=1, keepdim=True)
+        var = input.var(dim=1, keepdim=True, unbiased=False)
+        input_normalized = (input - mean) / torch.sqrt(var + self.eps)
+        
+        if self.elementwise_affine:
+            input_normalized = input_normalized * self.weight.view(1, -1, 1, 1) + self.bias.view(1, -1, 1, 1)
+        
+        return input_normalized
+
+    def extra_repr(self) -> str:
+        return "{num_channels}, eps={eps}, elementwise_affine={elementwise_affine}".format(**self.__dict__)
 
 class GroupNorm(Module):
     r"""Applies Group Normalization over a mini-batch of inputs.
